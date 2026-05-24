@@ -1,14 +1,21 @@
 ---
-name: bio-search
+name: mbio-academic-search
 description: >-
-  微生物学与生命科学文献的多源搜索、引文验证、MeSH检索策略、引文文件管理
-  (.nbib/.ris/.bib转换)和参考文献管理。通过MCP工具(PubMed, CrossRef, bioRxiv)
-  进行协调的多步骤文献工作流。当用户需要超越单一MCP调用的复杂文献检索时使用。
+Multi-source academic literature search and reference management skill for biomedical and cross-disciplinary research.
 ---
 
-# Bio-Search
+# When to Use
+Use this skill when the user needs:
 
-微生物学与生命科学文献的多源搜索、引文验证和参考文献管理。
+Literature search across PubMed, CrossRef, arXiv, or other academic databases
+
+MeSH term exploration and search strategy optimization
+
+Citation verification and formatting (APA, Nature, IEEE, Vancouver, MLA)
+
+Reference file management (.nbib, .ris, .bib, .enw conversion)
+
+Document deduplication and metadata enrichment
 
 ## MCP Tools
 
@@ -16,43 +23,46 @@ description: >-
 
 | Tool | Source | Best For |
 |------|--------|----------|
-| `pubmed_search_articles` | PubMed MCP | 微生物学、MeSH、病原菌、耐药性 |
-| `search_crossref` | paper-search MCP | 跨学科、交叉领域、引用计数 |
-| `search_biorxiv` | paper-search MCP | 生物学预印本(微生物组、基因组) |
+| `pubmed_search_articles` | PubMed MCP | Biomedical, MeSH, clinical trials |
+| `search_crossref` | paper-search MCP | Cross-disciplinary, citation counts |
+| `search_arxiv` | paper-search MCP | Preprints (physics, math, CS, biology) |
 
 ### Extended Search
 
 | Tool | Source | Best For |
 |------|--------|----------|
-| `search_google_scholar` | paper-search MCP | 广泛的学术搜索 |
-| `search_semantic_scholar` | paper-search MCP | 引用图、影响力评估 |
-| `search_medrxiv` | paper-search MCP | 临床微生物学预印本 |
+| `search_google_scholar` | paper-search MCP | Broad academic search (scraped) |
+| `search_semantic_scholar` | paper-search MCP | Citation graph, field-of-study filters |
+| `search_biorxiv` | paper-search MCP | Biology preprints |
+| `search_medrxiv` | paper-search MCP | Medical preprints |
+| `search_webofscience` | paper-search MCP | Curated index, citation reports |
+| `search_scopus` | paper-search MCP | Broad scholarly database |
 
 ### PubMed Utilities
 
 | Tool | Purpose |
 |------|---------|
-| `pubmed_fetch_articles` | 通过PMID获取完整元数据 |
-| `pubmed_find_related` | 相关文章发现 |
-| `pubmed_format_citations` | APA/MLA/BibTeX/RIS格式 |
-| `pubmed_convert_ids` | DOI ↔ PMID ↔ PMCID转换 |
-| `pubmed_lookup_mesh` | MeSH术语探索和层级 |
-| `pubmed_lookup_citation` | 文献信息→PMID查找 |
+| `pubmed_fetch_articles` | Full metadata by PMID |
+| `pubmed_find_related` | Related article discovery |
+| `pubmed_format_citations` | APA / MLA / BibTeX / RIS formatting |
+| `pubmed_convert_ids` | DOI ↔ PMID ↔ PMCID conversion |
+| `pubmed_lookup_mesh` | MeSH term exploration and hierarchy |
+| `pubmed_lookup_citation` | Bibliographic citation → PMID lookup |
 
 ## Source Routing
 
-See [Source Tiers & Reliability](references/source-tiers.md) for complete classification.
+See [Source Tiers & Reliability](references/source-tiers.md) for the complete reliability classification and fallback routing rules. The T1→T2→T3 fallback chain is the standard execution order across all workflows.
 
 Quick guide:
 
 | User need | Primary (T1) | Secondary (T2) | Last Resort (T3) |
 |-----------|-------------|-----------------|-------------------|
-| 微生物学/病原菌 | PubMed | Semantic Scholar | Google Scholar |
-| 预印本/微生物组 | bioRxiv | medRxiv | — |
-| 跨学科/生信 | CrossRef | Semantic Scholar | — |
-| 抗生素耐药 | PubMed | Semantic Scholar | Google Scholar |
-| 病毒学 | PubMed + bioRxiv | medRxiv | — |
-| 中文文献 | — | — | CNKI (手动) |
+| Medical / clinical | PubMed | Semantic Scholar | Google Scholar |
+| Cross-disciplinary | CrossRef | Semantic Scholar | Scopus |
+| Preprints / CS / physics | arXiv | bioRxiv / medRxiv | — |
+| Exhaustive review | PubMed + CrossRef + arXiv | Semantic Scholar + bioRxiv/medRxiv | WoS / Scopus |
+| Citation count sensitive | Semantic Scholar | CrossRef | — |
+| Chinese literature | — | — | CNKI / 万方 (manual) |
 
 ## Workflows
 
@@ -68,10 +78,11 @@ Quick guide:
 
 | Module | Purpose |
 |--------|---------|
-| [Dedup Engine](references/dedup-engine.md) | 多源结果去重 (WFs 1, 2) |
-| [Citation Parser](references/citation-parser.md) | 从文档提取引文 (WF 2) |
-| [Search Strategy](references/search-strategy.md) | 查询构建、源选择、排序 |
-| [RIS/BibTeX Format](references/ris-bibtex-format.md) | 格式规范和字段映射 |
+| [Dedup Engine](references/dedup-engine.md) | Unified deduplication (WFs 1, 2, 5a) |
+| [Citation Parser](references/citation-parser.md) | Extract citations from documents (WF 2) |
+| [Search Strategy](references/search-strategy.md) | Query construction, source selection, ranking |
+| [RIS/BibTeX Format](references/ris-bibtex-format.md) | Format specifications and field mappings |
+| [Format Converter](scripts/format-converter.py) | Multi-source .nbib/.ris/.bib downloader |
 
 ## Environment Setup
 
@@ -89,3 +100,28 @@ Set via `export` or `.env` file.
 ```bash
 export http_proxy=http://127.0.0.1:7890
 export https_proxy=http://127.0.0.1:7890
+```
+
+### Pre-flight Check
+
+```bash
+python scripts/preflight.py
+```
+
+Run before batch operations to verify API endpoints are reachable.
+
+### Format Converter Dependencies
+
+The format converter (`scripts/format-converter.py`) uses Python stdlib only — no extra dependencies. Run `python scripts/format-converter.py --test` to verify the conversion pipeline.
+
+## Error Handling
+
+- **MCP tool unavailable**: report specific failure, continue with remaining tools.
+- **No results**: broaden terms, try alternative sources, suggest user refine query.
+- **Script failure (2x)**: fall back to manual generation from MCP-fetched metadata.
+
+## Limitations
+
+- Google Scholar and Semantic Scholar are scraped (not API-backed) — results may vary.
+- Chinese literature (CNKI / 万方) not indexed by CrossRef or PubMed.
+- Citation counts may be delayed (CrossRef updates monthly).
